@@ -1,0 +1,13 @@
+streamlit
+ultralytics
+onnx
+onnxruntime
+opencv-python
+numpy
+pillow
+pandas
+requests
+matplotlib
+python-dotenv
+fastapi
+uvicorn
