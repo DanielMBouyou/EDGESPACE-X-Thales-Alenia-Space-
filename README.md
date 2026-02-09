@@ -1,4 +1,8 @@
-# EDGE SPACE - Prototype A-Z
+# EDGESPACE
+
+Detection rapide des feux de foret a partir d'images satellites et d'IA (projet startup incubateur Thales).
+
+## Prototype actuel
 
 Demo: SAR vessel detection -> event packet -> webhook.
 
