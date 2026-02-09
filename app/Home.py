@@ -29,12 +29,24 @@ with col3:
 st.write("")
 
 c1, c2, c3 = st.columns([1, 1, 1])
+
+
+def safe_page_link(label: str, *paths: str) -> None:
+    for page_path in paths:
+        try:
+            st.page_link(page_path, label=label)
+            return
+        except KeyError:
+            continue
+    st.button(label, disabled=True)
+
+
 with c1:
-    st.page_link("app/pages/1_Try_it.py", label="Lancer la demo")
+    safe_page_link("Lancer la demo", "pages/1_Try_it.py", "app/pages/1_Try_it.py")
 with c2:
-    st.page_link("app/pages/3_Satellite_Proof.py", label="Satellite Proof")
+    safe_page_link("Satellite Proof", "pages/3_Satellite_Proof.py", "app/pages/3_Satellite_Proof.py")
 with c3:
-    st.page_link("app/pages/2_KPIs.py", label="KPIs")
+    safe_page_link("KPIs", "pages/2_KPIs.py", "app/pages/2_KPIs.py")
 
 st.write("")
 
