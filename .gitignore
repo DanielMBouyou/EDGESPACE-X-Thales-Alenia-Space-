@@ -27,3 +27,9 @@ models/weights/
 
 # Local env
 .env
+
+# Local datasets (do not version large training data)
+datasets/satellite_fire/
+datasets/coco8/
+datasets/raw/ts_satfire_preview/
+datasets/dataset.yaml

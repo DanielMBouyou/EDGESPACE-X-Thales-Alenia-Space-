@@ -14,13 +14,20 @@ def make_event_packet(
     event_id = str(uuid.uuid4())
     packet = {
         "event_id": event_id,
-        "event_type": "vessel_detected",
+        "event_type": meta.get("event_type", "wildfire"),
         "timestamp_utc": now_utc_iso(),
-        "sensor_mode": "SAR",
+        "sat_id": meta.get("sat_id", "EDGESPACE-SIM-01"),
+        "sensor_mode": meta.get("sensor_mode", "Optical/IR"),
+        "geolocation": meta.get("geolocation", {"lat": 0.0, "lon": 0.0, "geohash": "unknown"}),
         "detections": detections,
+        "evidence": {
+            "thumbnail_b64": meta.get("thumbnail_b64", ""),
+            "thumbnail_hash": meta.get("thumbnail_hash", ""),
+        },
         "input": {
             "input_hash": meta.get("input_hash"),
             "image_size": meta.get("image_size"),
+            "tile_index": meta.get("tile_index", 0),
         },
         "model": {
             "model_name": meta.get("model_name", "yolov8"),

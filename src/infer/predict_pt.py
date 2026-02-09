@@ -33,8 +33,10 @@ def predict_pt(
         if results:
             boxes = results[0].boxes
             if boxes is not None and len(boxes) > 0:
+                names = model.names if model and hasattr(model, "names") else {}
                 for box, conf, cls in zip(boxes.xyxy.tolist(), boxes.conf.tolist(), boxes.cls.tolist()):
-                    dets.append({"bbox_px": [float(v) for v in box], "confidence": float(conf), "class": "vessel"})
+                    class_name = names.get(int(cls), "fire")
+                    dets.append({"bbox_px": [float(v) for v in box], "confidence": float(conf), "class": class_name})
 
     return dets, timings
 

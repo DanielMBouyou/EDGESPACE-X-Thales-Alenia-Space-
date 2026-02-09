@@ -93,7 +93,7 @@ def predict_onnx(
                 float(min(orig_w, x2 * scale_x)),
                 float(min(orig_h, y2 * scale_y)),
             ]
-            detections.append({"bbox_px": bbox, "confidence": float(score), "class": "vessel"})
+            detections.append({"bbox_px": bbox, "confidence": float(score), "class": "fire"})
 
     return detections, timings
 

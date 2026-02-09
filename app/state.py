@@ -22,3 +22,7 @@ def init_state() -> None:
         st.session_state.last_webhook_status = None
     if "last_webhook_latency" not in st.session_state:
         st.session_state.last_webhook_latency = None
+    if "batch_packets" not in st.session_state:
+        st.session_state.batch_packets = []
+    if "audit_log" not in st.session_state:
+        st.session_state.audit_log = []

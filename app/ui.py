@@ -111,6 +111,19 @@ def info_card(title: str, body: str) -> None:
     )
 
 
+def metric_card(title: str, value: str, subtitle: str = "") -> None:
+    st.markdown(
+        f"""
+<div class="edge-card" style="text-align:center;">
+  <div style="font-size:13px;color:#6b7280;margin-bottom:4px;">{title}</div>
+  <div style="font-size:28px;font-weight:700;color:#0b1a3a;">{value}</div>
+  <div style="font-size:12px;color:#4b4f6b;margin-top:4px;">{subtitle}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
 def pipeline_bar(steps: list[tuple[str, str]]) -> None:
     chips = []
     for name, status in steps:

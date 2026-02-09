@@ -6,123 +6,161 @@ import pandas as pd
 import streamlit as st
 
 from app.state import init_state
-from app.ui import apply_theme, header
+from app.ui import apply_theme, header, metric_card
 from app.utils import ROOT
 from src.infer.event_packet import make_event_packet
-from src.infer.predict_onnx import predict_onnx
-from src.infer.predict_pt import predict_pt
-from src.infer.runtime import load_onnx_session, load_pt_model, model_size_mb
+from src.infer.runtime import model_size_mb
 from src.utils.hashing import sha256_bytes
-from src.utils.image import load_image_from_bytes
-from src.utils.metrics import percentiles
 
-st.set_page_config(page_title="EDGE SPACE - KPIs", layout="wide")
+st.set_page_config(page_title="EDGE SPACE — KPIs", page_icon="📊", layout="wide")
 apply_theme()
 init_state()
 
-header("KPIs", "Latency, accuracy, and payload footprint.")
+header("📊 KPIs", "Métriques clés : latence, précision, empreinte payload.")
+
+st.write("")
+
+# ── Métriques du modèle ──────────────────────────────────────────────────────
+st.markdown("### 🎯 Métriques du modèle")
 
 summary_path = ROOT / "runs" / "summary.json"
-summary = {}
+summary: dict = {}
 if summary_path.exists():
     try:
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    except Exception:
         summary = {}
 
-col1, col2, col3 = st.columns(3)
-with col1:
+# Also look for latest training run
+runs_dir = ROOT / "runs" / "detect" / "runs"
+if not summary and runs_dir.exists():
+    for rd in sorted(runs_dir.iterdir(), reverse=True):
+        results_csv = rd / "results.csv"
+        if results_csv.exists():
+            try:
+                df = pd.read_csv(results_csv)
+                df.columns = df.columns.str.strip()
+                last = df.iloc[-1]
+                summary = {
+                    "precision": float(last.get("metrics/precision(B)", 0)),
+                    "recall": float(last.get("metrics/recall(B)", 0)),
+                    "map50": float(last.get("metrics/mAP50(B)", 0)),
+                    "map5095": float(last.get("metrics/mAP50-95(B)", 0)),
+                    "epochs": len(df),
+                }
+            except Exception:
+                pass
+            break
+
+c1, c2, c3, c4 = st.columns(4)
+with c1:
     st.metric("Precision", f"{summary.get('precision', 0):.3f}")
-with col2:
+with c2:
     st.metric("Recall", f"{summary.get('recall', 0):.3f}")
-with col3:
-    st.metric("mAP50-95", f"{summary.get('map5095', 0):.3f}")
+with c3:
+    st.metric("mAP@50", f"{summary.get('map50', 0):.3f}")
+with c4:
+    st.metric("mAP@50-95", f"{summary.get('map5095', 0):.3f}")
+
+if summary.get("epochs"):
+    st.caption(f"Après {summary['epochs']} époques d'entraînement")
 
 st.divider()
 
-@st.cache_resource
-def get_pt_model(path: str):
-    return load_pt_model(path)
+# ── Empreinte payload ─────────────────────────────────────────────────────────
+st.markdown("### 📦 Empreinte payload")
 
-
-@st.cache_resource
-def get_onnx_session(path: str):
-    return load_onnx_session(path)
-
-
-mode = st.radio("Runtime", ["Orbite (ONNX)", "Sol (PT)"], horizontal=True)
-run_batch = st.button("Run batch test (demo_samples)")
-
-latencies = []
-if run_batch:
-    sample_dir = ROOT / "datasets" / "demo_samples"
-    samples = sorted([p for p in sample_dir.glob("*.*") if p.suffix.lower() in {".png", ".jpg", ".jpeg", ".tif", ".tiff"}])
-    if not samples:
-        st.warning("No demo samples found in datasets/demo_samples.")
-    else:
-        if mode.startswith("Orbite"):
-            onnx_int8 = ROOT / "models" / "weights" / "best.int8.onnx"
-            onnx_fp32 = ROOT / "models" / "weights" / "best.onnx"
-            onnx_path = onnx_int8 if onnx_int8.exists() else onnx_fp32
-            if not onnx_path.exists():
-                st.error("Missing ONNX model.")
-            else:
-                session = get_onnx_session(str(onnx_path))
-                input_name = session.get_inputs()[0].name
-                for p in samples[:50]:
-                    img = load_image_from_bytes(p.read_bytes())
-                    _, t = predict_onnx(img, session=session, input_name=input_name)
-                    latencies.append(sum(t.values()))
-        else:
-            weights = ROOT / "models" / "weights" / "best.pt"
-            if not weights.exists():
-                st.error("Missing PT model.")
-            else:
-                model = get_pt_model(str(weights))
-                for p in samples[:50]:
-                    img = load_image_from_bytes(p.read_bytes())
-                    _, t = predict_pt(img, model=model)
-                    latencies.append(sum(t.values()))
-
-if latencies:
-    p50, p95 = percentiles(latencies)
-    st.metric("Latency P50", f"{p50:.1f} ms")
-    st.metric("Latency P95", f"{p95:.1f} ms")
-    st.line_chart(pd.DataFrame({"latency_ms": latencies}))
-
-st.divider()
-
-weights = ROOT / "models" / "weights" / "best.pt"
+weights_pt = ROOT / "models" / "weights" / "best.pt"
 onnx_fp32 = ROOT / "models" / "weights" / "best.onnx"
 onnx_int8 = ROOT / "models" / "weights" / "best.int8.onnx"
 
-st.markdown("**Model size**")
 model_rows = []
-if weights.exists():
-    model_rows.append({"model": "best.pt", "size_mb": model_size_mb(weights)})
-if onnx_fp32.exists():
-    model_rows.append({"model": "best.onnx", "size_mb": model_size_mb(onnx_fp32)})
-if onnx_int8.exists():
-    model_rows.append({"model": "best.int8.onnx", "size_mb": model_size_mb(onnx_int8)})
+for name, path in [
+    ("best.pt (PyTorch)", weights_pt),
+    ("best.onnx (FP32)", onnx_fp32),
+    ("best.int8.onnx (INT8)", onnx_int8),
+]:
+    if path.exists():
+        size = model_size_mb(path)
+        model_rows.append({
+            "Modèle": name,
+            "Taille (MB)": f"{size:.2f}",
+            "Orbital ?": "✅" if "onnx" in name else "⚠️ Trop lourd",
+        })
+
 if model_rows:
     st.table(pd.DataFrame(model_rows))
 else:
-    st.info("No model files found.")
+    st.info("Aucun modèle trouvé. L'entraînement est peut-être en cours…")
 
-st.markdown("**Packet size (kB)**")
-packet = st.session_state.last_packet
-if packet is None:
-    packet = make_event_packet(
-        [],
-        {
-            "input_hash": sha256_bytes(b""),
-            "image_size": [640, 640],
-            "model_name": "yolov8",
-            "model_version": "demo",
-            "runtime": "onnx-int8",
-            "latency_ms": {},
-        },
-        secret="demo-secret",
-    )
-packet_size_kb = len(json.dumps(packet).encode("utf-8")) / 1024
-st.metric("Event packet size", f"{packet_size_kb:.2f} kB")
+st.divider()
+
+# ── Taille Event Packet ──────────────────────────────────────────────────────
+st.markdown("### 📡 Taille Event Packet")
+
+dummy_packet = make_event_packet(
+    [{"bbox_px": [100, 100, 200, 200], "confidence": 0.92, "class": "fire"}],
+    {
+        "input_hash": sha256_bytes(b"demo"),
+        "image_size": [640, 640],
+        "model_name": "yolo11s-fire",
+        "model_version": "demo",
+        "runtime": "onnx-fp16",
+        "latency_ms": {},
+    },
+    secret="demo-secret",
+)
+packet_bytes = len(json.dumps(dummy_packet).encode())
+
+pc1, pc2, pc3 = st.columns(3)
+with pc1:
+    st.metric("Event packet (1 détection)", f"{packet_bytes / 1024:.2f} kB")
+with pc2:
+    image_size_mb = 50  # typical satellite image
+    ratio = image_size_mb * 1024 * 1024 / max(packet_bytes, 1)
+    st.metric("Ratio compression", f"×{ratio:,.0f}")
+with pc3:
+    st.metric("Économie par image", f"{image_size_mb} MB → {packet_bytes / 1024:.1f} kB")
+
+st.divider()
+
+# ── Comparatif volume ─────────────────────────────────────────────────────────
+st.markdown("### 📉 Volume de données : Image vs Event Packet")
+
+st.table(pd.DataFrame({
+    "Scénario": [
+        "1 image",
+        "10 images (passage)",
+        "100 images (journée)",
+        "1 000 images (constellation)",
+    ],
+    "Images brutes (MB)": [50, 500, 5_000, 50_000],
+    "Event packets (kB)": [
+        f"{packet_bytes/1024:.1f}",
+        f"{10*packet_bytes/1024:.1f}",
+        f"{100*packet_bytes/1024:.1f}",
+        f"{1000*packet_bytes/1024:.1f}",
+    ],
+    "Réduction": ["99.998 %"] * 4,
+}))
+
+st.divider()
+
+# ── Budget latence ────────────────────────────────────────────────────────────
+st.markdown("### ⏱️ Budget latence estimé (orbite → alerte)")
+
+st.table(pd.DataFrame({
+    "Étape": [
+        "T_infer (inférence on-board)",
+        "T_buffer (attente contact)",
+        "T_downlink (transmission)",
+        "T_api (webhook)",
+        "Total P50",
+        "Total P95",
+    ],
+    "LP (Low Power)": ["800 ms", "~300 s (pire cas)", "< 1 s", "< 1 s", "~5 min", "~12 min"],
+    "HP (High Perf)": ["50 ms", "~300 s (pire cas)", "< 1 s", "< 1 s", "~5 min", "~12 min"],
+    "HP + Relais GEO": ["50 ms", "~10 s", "< 1 s", "< 1 s", "< 15 sec", "< 60 sec"],
+}))
+
+st.caption("Le goulot d'étranglement est le T_buffer (attente fenêtre de contact), pas l'inférence.")
