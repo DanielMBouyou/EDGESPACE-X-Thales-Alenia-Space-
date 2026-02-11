@@ -51,27 +51,22 @@ st.divider()
 
 # ── Navigation rapide ─────────────────────────────────────────────────────────
 st.markdown("### 🚀 Navigation rapide")
-c1, c2, c3, c4 = st.columns(4)
 
+_NAV = [
+    ("🔬 Démo live", "pages/1_Try_it.py"),
+    ("📊 KPIs", "pages/2_KPIs.py"),
+    ("🛰️ Satellite Proof", "pages/3_Satellite_Proof.py"),
+    ("🏗️ Architecture", "pages/4_Architecture.py"),
+    ("🔒 Sécurité", "pages/5_Security.py"),
+    ("📡 API", "pages/6_API_Integration.py"),
+    ("📜 Logs", "pages/7_Logs.py"),
+]
 
-def safe_page_link(label: str, *paths: str) -> None:
-    for p in paths:
-        try:
-            st.page_link(p, label=label)
-            return
-        except Exception:
-            continue
-    st.button(label, disabled=True)
-
-
-with c1:
-    safe_page_link("🔬 Démo live", "pages/1_Try_it.py", "app/pages/1_Try_it.py")
-with c2:
-    safe_page_link("📊 KPIs", "pages/2_KPIs.py", "app/pages/2_KPIs.py")
-with c3:
-    safe_page_link("🛰️ Satellite Proof", "pages/3_Satellite_Proof.py", "app/pages/3_Satellite_Proof.py")
-with c4:
-    safe_page_link("🏗️ Architecture", "pages/4_Architecture.py", "app/pages/4_Architecture.py")
+cols = st.columns(len(_NAV))
+for col, (label, page) in zip(cols, _NAV):
+    with col:
+        if st.button(label, use_container_width=True):
+            st.switch_page(page)
 
 st.write("")
 st.divider()

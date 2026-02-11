@@ -20,6 +20,7 @@ Thumbs.db
 
 # Runtime outputs
 runs/
+!runs/summary.json
 models/weights/
 *.onnx
 *.pt
