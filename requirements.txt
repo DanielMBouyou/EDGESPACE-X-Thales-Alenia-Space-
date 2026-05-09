@@ -2,7 +2,7 @@ streamlit
 ultralytics
 onnx
 onnxruntime
-opencv-python
+opencv-python-headless
 numpy
 pillow
 pandas
