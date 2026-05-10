@@ -12,16 +12,16 @@ from src.infer.event_packet import make_event_packet
 from src.infer.runtime import model_size_mb
 from src.utils.hashing import sha256_bytes
 
-st.set_page_config(page_title="EDGE SPACE — KPIs", page_icon="📊", layout="wide")
+st.set_page_config(page_title="EDGE SPACE — KPIs", layout="wide")
 apply_theme()
 init_state()
 
-header("📊 KPIs", "Métriques clés : latence, précision, empreinte payload.")
+header("KPIs", "Key metrics: latency, accuracy, payload footprint.")
 
 st.write("")
 
 # ── Métriques du modèle ──────────────────────────────────────────────────────
-st.markdown("### 🎯 Métriques du modèle")
+st.markdown("### Model metrics")
 
 summary_path = ROOT / "runs" / "summary.json"
 summary: dict = {}
@@ -63,12 +63,12 @@ with c4:
     st.metric("mAP@50-95", f"{summary.get('map5095', 0):.3f}")
 
 if summary.get("epochs"):
-    st.caption(f"Après {summary['epochs']} époques d'entraînement")
+    st.caption(f"After {summary['epochs']} training epochs")
 
 st.divider()
 
 # ── Empreinte payload ─────────────────────────────────────────────────────────
-st.markdown("### 📦 Empreinte payload")
+st.markdown("### Payload footprint")
 
 weights_pt = ROOT / "models" / "weights" / "best.pt"
 onnx_fp32 = ROOT / "models" / "weights" / "best.onnx"
@@ -83,20 +83,20 @@ for name, path in [
     if path.exists():
         size = model_size_mb(path)
         model_rows.append({
-            "Modèle": name,
-            "Taille (MB)": f"{size:.2f}",
-            "Orbital ?": "✅" if "onnx" in name else "⚠️ Trop lourd",
+            "Model": name,
+            "Size (MB)": f"{size:.2f}",
+            "Orbital ready": "Yes" if "onnx" in name else "No (too heavy)",
         })
 
 if model_rows:
     st.table(pd.DataFrame(model_rows))
 else:
-    st.info("Aucun modèle trouvé. L'entraînement est peut-être en cours…")
+    st.info("No model found. Training may still be in progress.")
 
 st.divider()
 
 # ── Taille Event Packet ──────────────────────────────────────────────────────
-st.markdown("### 📡 Taille Event Packet")
+st.markdown("### Event packet size")
 
 dummy_packet = make_event_packet(
     [{"bbox_px": [100, 100, 200, 200], "confidence": 0.92, "class": "fire"}],
@@ -114,53 +114,53 @@ packet_bytes = len(json.dumps(dummy_packet).encode())
 
 pc1, pc2, pc3 = st.columns(3)
 with pc1:
-    st.metric("Event packet (1 détection)", f"{packet_bytes / 1024:.2f} kB")
+    st.metric("Event packet (1 detection)", f"{packet_bytes / 1024:.2f} kB")
 with pc2:
     image_size_mb = 50  # typical satellite image
     ratio = image_size_mb * 1024 * 1024 / max(packet_bytes, 1)
-    st.metric("Ratio compression", f"×{ratio:,.0f}")
+    st.metric("Compression ratio", f"×{ratio:,.0f}")
 with pc3:
-    st.metric("Économie par image", f"{image_size_mb} MB → {packet_bytes / 1024:.1f} kB")
+    st.metric("Saved per image", f"{image_size_mb} MB → {packet_bytes / 1024:.1f} kB")
 
 st.divider()
 
 # ── Comparatif volume ─────────────────────────────────────────────────────────
-st.markdown("### 📉 Volume de données : Image vs Event Packet")
+st.markdown("### Data volume — image vs event packet")
 
 st.table(pd.DataFrame({
-    "Scénario": [
+    "Scenario": [
         "1 image",
-        "10 images (passage)",
-        "100 images (journée)",
-        "1 000 images (constellation)",
+        "10 images (one pass)",
+        "100 images (one day)",
+        "1,000 images (constellation)",
     ],
-    "Images brutes (MB)": [50, 500, 5_000, 50_000],
+    "Raw images (MB)": [50, 500, 5_000, 50_000],
     "Event packets (kB)": [
         f"{packet_bytes/1024:.1f}",
         f"{10*packet_bytes/1024:.1f}",
         f"{100*packet_bytes/1024:.1f}",
         f"{1000*packet_bytes/1024:.1f}",
     ],
-    "Réduction": ["99.998 %"] * 4,
+    "Reduction": ["99.998 %"] * 4,
 }))
 
 st.divider()
 
 # ── Budget latence ────────────────────────────────────────────────────────────
-st.markdown("### ⏱️ Budget latence estimé (orbite → alerte)")
+st.markdown("### Latency budget — orbit to alert")
 
 st.table(pd.DataFrame({
-    "Étape": [
-        "T_infer (inférence on-board)",
-        "T_buffer (attente contact)",
+    "Step": [
+        "T_infer (on-board inference)",
+        "T_buffer (contact wait)",
         "T_downlink (transmission)",
         "T_api (webhook)",
         "Total P50",
         "Total P95",
     ],
-    "LP (Low Power)": ["800 ms", "~300 s (pire cas)", "< 1 s", "< 1 s", "~5 min", "~12 min"],
-    "HP (High Perf)": ["50 ms", "~300 s (pire cas)", "< 1 s", "< 1 s", "~5 min", "~12 min"],
-    "HP + Relais GEO": ["50 ms", "~10 s", "< 1 s", "< 1 s", "< 15 sec", "< 60 sec"],
+    "LP (Low Power)": ["800 ms", "~300 s (worst case)", "< 1 s", "< 1 s", "~5 min", "~12 min"],
+    "HP (High Perf)": ["50 ms", "~300 s (worst case)", "< 1 s", "< 1 s", "~5 min", "~12 min"],
+    "HP + GEO relay": ["50 ms", "~10 s", "< 1 s", "< 1 s", "< 15 sec", "< 60 sec"],
 }))
 
-st.caption("Le goulot d'étranglement est le T_buffer (attente fenêtre de contact), pas l'inférence.")
+st.caption("The bottleneck is T_buffer (contact-window wait), not inference.")

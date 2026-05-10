@@ -6,27 +6,27 @@ import streamlit as st
 from app.state import init_state
 from app.ui import apply_theme, header
 
-st.set_page_config(page_title="EDGE SPACE — Sécurité", page_icon="🔒", layout="wide")
+st.set_page_config(page_title="EDGE SPACE — Security", layout="wide")
 apply_theme()
 init_state()
 
-header("🔒 Sécurité & Audit", "Reproductibilité, intégrité, traçabilité complète.")
+header("Security & audit", "Reproducibility, integrity, full traceability.")
 
 st.write("")
 
 # ── Reproductibilité ─────────────────────────────────────────────────────────
-st.markdown("### 🔁 Reproductibilité")
+st.markdown("### Reproducibility")
 st.markdown(
     """
 <div class="edge-card">
-  <div style="color:#4b4f6b;font-size:14px;line-height:1.8;">
-    <b>Mêmes entrées → mêmes sorties.</b> Garanti par :
+  <div style="color:#5c5e62;font-size:14px;line-height:1.8;">
+    <b style="color:#171a20;">Same input → same output.</b> Guaranteed by:
     <ul>
-      <li>✅ <b>Modèle versionné</b> — hash SHA-256 du fichier ONNX / PT</li>
-      <li>✅ <b>Config figée</b> — seuil confiance, taille entrée, NMS fixés</li>
-      <li>✅ <b>Hash partout</b> — entrée, modèle, packet</li>
-      <li>✅ <b>NMS déterministe</b> — même algorithme, même ordre</li>
-      <li>✅ <b>Pas de random</b> — inférence sans augmentation</li>
+      <li><b>Versioned model</b> — SHA-256 hash of the ONNX / PT file</li>
+      <li><b>Frozen configuration</b> — confidence threshold, input size, NMS fixed</li>
+      <li><b>Hashing throughout</b> — input, model, packet</li>
+      <li><b>Deterministic NMS</b> — identical algorithm and ordering</li>
+      <li><b>No randomness</b> — inference without augmentation</li>
     </ul>
   </div>
 </div>
@@ -37,76 +37,76 @@ st.markdown(
 st.divider()
 
 # ── Chaîne d'intégrité ───────────────────────────────────────────────────────
-st.markdown("### 🔗 Chaîne d'intégrité")
+st.markdown("### Integrity chain")
 
 st.code(
     """
- ┌────────────────────┐
- │  📷 Image entrée   │
- │  SHA-256 → input_hash
- └────────┬───────────┘
-          │
-          ▼
- ┌────────────────────┐
- │  🧠 Modèle ONNX    │
- │  SHA-256 → model_hash
- └────────┬───────────┘
-          │
-          ▼
- ┌────────────────────┐
- │  📋 Event Packet   │
- │  SHA-256 → packet_hash
- └────────┬───────────┘
-          │
-          ▼
- ┌────────────────────┐
- │  🔑 Signature      │
- │  HMAC-SHA256(secret, packet_hash)
- │  → integrity.signature
- └────────────────────┘
++--------------------+
+|  Input image       |
+|  SHA-256 -> input_hash
++--------+-----------+
+         |
+         v
++--------------------+
+|  ONNX model        |
+|  SHA-256 -> model_hash
++--------+-----------+
+         |
+         v
++--------------------+
+|  Event packet      |
+|  SHA-256 -> packet_hash
++--------+-----------+
+         |
+         v
++--------------------+
+|  Signature         |
+|  HMAC-SHA256(secret, packet_hash)
+|  -> integrity.signature
++--------------------+
 """,
     language="text",
 )
 
 st.markdown("""
-**Vérification côté récepteur :**
-1. Recalculer `packet_hash` = SHA-256(packet sans integrity)
-2. Vérifier `signature` = HMAC-SHA256(shared_secret, packet_hash)
-3. Si match → packet authentique et non altéré
+**Verification on the receiver side:**
+1. Recompute `packet_hash` = SHA-256(packet without integrity)
+2. Verify `signature` = HMAC-SHA256(shared_secret, packet_hash)
+3. If matched → packet is authentic and untampered
 """)
 
 st.divider()
 
 # ── Robustesse opérationnelle ─────────────────────────────────────────────────
-st.markdown("### 🛡️ Robustesse opérationnelle")
+st.markdown("### Operational robustness")
 
 st.table(pd.DataFrame({
-    "Scénario": [
-        "Pas de GPU disponible",
-        "Image corrompue / invalide",
-        "Batch de N images",
-        "Modèle manquant",
+    "Scenario": [
+        "No GPU available",
+        "Corrupted / invalid image",
+        "Batch of N images",
+        "Model missing",
         "Webhook timeout",
-        "Résultat vide (0 détections)",
+        "Empty result (0 detections)",
     ],
-    "Comportement": [
-        "Fallback automatique CPU (ONNX Runtime)",
-        "Rejet + log d'erreur + skip",
-        "Traitement séquentiel, packet par image",
-        "Erreur explicite, pas de crash",
-        "3 retries avec backoff, log échec",
-        "Event packet généré quand même (detections: [])",
+    "Behavior": [
+        "Automatic CPU fallback (ONNX Runtime)",
+        "Reject + error log + skip",
+        "Sequential processing, one packet per image",
+        "Explicit error, no crash",
+        "Three retries with backoff, log failure",
+        "Event packet still generated (detections: [])",
     ],
-    "Status": ["✅", "✅", "✅", "✅", "✅", "✅"],
+    "Status": ["OK", "OK", "OK", "OK", "OK", "OK"],
 }))
 
 st.divider()
 
 # ── Audit Trail ───────────────────────────────────────────────────────────────
-st.markdown("### 📝 Audit Trail")
+st.markdown("### Audit trail")
 
 st.markdown("""
-Chaque event packet contient sa propre traçabilité :
+Each event packet carries its own traceability:
 
 ```json
 {
@@ -127,27 +127,28 @@ Chaque event packet contient sa propre traçabilité :
 }
 ```
 
-**Logs exportables** → voir la page Logs.
+Logs are exportable — see the Logs page.
 """)
 
 st.divider()
 
 # ── Séparation Compute / Transport ────────────────────────────────────────────
-st.markdown("### 📦 Séparation Compute vs Transport")
+st.markdown("### Compute vs transport separation")
 
 col1, col2 = st.columns(2)
 with col1:
     st.markdown(
         """
-<div class="edge-card" style="border-top:3px solid #e85d04;">
-  <b>🧮 Compute (identique sol / orbite)</b>
-  <ul style="color:#4b4f6b;margin-top:8px;">
-    <li>Chargement image</li>
-    <li>Pré-traitement (resize 640)</li>
-    <li>Inférence ONNX</li>
-    <li>NMS + filtrage</li>
-    <li>Packaging event packet</li>
-    <li>Signature HMAC</li>
+<div class="edge-card">
+  <div class="edge-pill">COMPUTE</div>
+  <b style="color:#171a20;">Identical on ground and in orbit</b>
+  <ul style="color:#5c5e62;margin-top:8px;line-height:1.7;">
+    <li>Image loading</li>
+    <li>Pre-processing (resize 640)</li>
+    <li>ONNX inference</li>
+    <li>NMS and filtering</li>
+    <li>Event packet packaging</li>
+    <li>HMAC signature</li>
   </ul>
 </div>
 """,
@@ -156,13 +157,14 @@ with col1:
 with col2:
     st.markdown(
         """
-<div class="edge-card" style="border-top:3px solid #3b82f6;">
-  <b>📡 Transport (seul élément différent)</b>
-  <ul style="color:#4b4f6b;margin-top:8px;">
-    <li><b>Sol (PoC) :</b> HTTP POST webhook</li>
-    <li><b>Orbite :</b> Lien S/X-band → station sol → API</li>
-    <li>Même payload JSON dans les deux cas</li>
-    <li>Simulateur de downlink intégré au PoC</li>
+<div class="edge-card">
+  <div class="edge-pill">TRANSPORT</div>
+  <b style="color:#171a20;">The only differing element</b>
+  <ul style="color:#5c5e62;margin-top:8px;line-height:1.7;">
+    <li><b>Ground (PoC):</b> HTTP POST webhook</li>
+    <li><b>Orbit:</b> S/X-band link → ground station → API</li>
+    <li>Same JSON payload in both cases</li>
+    <li>Downlink simulator built into the PoC</li>
   </ul>
 </div>
 """,

@@ -8,30 +8,30 @@ from app.ui import apply_theme, header, metric_card
 from app.utils import ROOT
 from src.infer.runtime import model_size_mb
 
-st.set_page_config(page_title="EDGE SPACE — Satellite Proof", page_icon="🛰️", layout="wide")
+st.set_page_config(page_title="EDGE SPACE — Satellite Proof", layout="wide")
 apply_theme()
 init_state()
 
-header("🛰️ On-Orbit Equivalence", "Pourquoi le même code peut tourner en orbite — preuves et specs.")
+header("On-orbit equivalence", "Why the same code can run in orbit — evidence and specifications.")
 
 st.write("")
 
 # ── Ce qui change / ne change pas ────────────────────────────────────────────
-st.markdown("### 🔄 Ce qui change en orbite (et ce qui ne change pas)")
+st.markdown("### What changes in orbit (and what does not)")
 
 col_same, col_diff = st.columns(2)
 with col_same:
     st.markdown(
         """
-<div class="edge-card" style="border-left:4px solid #16a34a;">
-  <b>✅ Ne change PAS</b>
-  <ul style="margin-top:8px;color:#4b4f6b;">
-    <li>Code d'inférence (même binaire / conteneur)</li>
-    <li>Format du modèle ONNX</li>
-    <li>Format de l'event packet (JSON signé)</li>
-    <li>Pipeline : ingest → preprocess → infer → packet</li>
-    <li>Algorithme NMS déterministe</li>
-    <li>Hash &amp; signature HMAC</li>
+<div class="edge-card">
+  <div class="edge-pill">UNCHANGED</div>
+  <ul style="margin-top:8px;color:#5c5e62;line-height:1.7;">
+    <li>Inference code (same binary / container)</li>
+    <li>ONNX model format</li>
+    <li>Event packet format (signed JSON)</li>
+    <li>Pipeline: ingest → preprocess → infer → packet</li>
+    <li>Deterministic NMS algorithm</li>
+    <li>SHA-256 hash and HMAC signature</li>
   </ul>
 </div>
 """,
@@ -40,14 +40,14 @@ with col_same:
 with col_diff:
     st.markdown(
         """
-<div class="edge-card" style="border-left:4px solid #f59e0b;">
-  <b>⚠️ Change</b>
-  <ul style="margin-top:8px;color:#4b4f6b;">
-    <li>Contraintes puissance (1-25 W vs 300 W)</li>
-    <li>Contraintes mémoire (0.5-2 GB vs 16+ GB)</li>
-    <li>Bande passante downlink (kbps – Mbps)</li>
-    <li>Radiations / température</li>
-    <li>Fenêtres de contact (min / orbite)</li>
+<div class="edge-card">
+  <div class="edge-pill">CHANGED</div>
+  <ul style="margin-top:8px;color:#5c5e62;line-height:1.7;">
+    <li>Power constraints (1–25 W vs 300 W)</li>
+    <li>Memory constraints (0.5–2 GB vs 16+ GB)</li>
+    <li>Downlink bandwidth (kbps – Mbps)</li>
+    <li>Radiation and thermal environment</li>
+    <li>Contact windows (minutes per orbit)</li>
   </ul>
 </div>
 """,
@@ -57,24 +57,24 @@ with col_diff:
 st.divider()
 
 # ── LP / HP Switch ────────────────────────────────────────────────────────────
-st.markdown("### ⚡ Profils Compute Orbital")
+st.markdown("### Orbital compute profiles")
 
 orbital_mode = st.radio(
-    "Profil",
-    ["🔋 Mode Orbital-LP (Low Power)", "🖥️ Mode Orbital-HP (High Performance)"],
+    "Profile",
+    ["Orbital-LP (Low Power)", "Orbital-HP (High Performance)"],
     horizontal=True,
 )
 
-if orbital_mode.startswith("🔋"):
+if orbital_mode.startswith("Orbital-LP"):
     st.markdown(
         """
 <div class="edge-card">
-  <div style="font-weight:700;font-size:18px;margin-bottom:12px;">
-    🔋 Profil LP — Ultra Low-Power AI Accelerator
+  <div style="font-weight:600;font-size:16px;margin-bottom:12px;letter-spacing:-0.01em;">
+    LP profile — Ultra low-power AI accelerator
   </div>
-  <div style="color:#4b4f6b;font-size:14px;">
-    <b>Référence :</b> Φ-Sat-2 / Intel Myriad X — démontré en vol pour cloud detection CNN.<br/>
-    <b>Message business :</b> <i>"On sait faire de l'IA utile avec quelques watts."</i>
+  <div style="color:#5c5e62;font-size:14px;line-height:1.6;">
+    <b>Reference:</b> Φ-Sat-2 / Intel Myriad X — flight-demonstrated for cloud detection CNN.<br/>
+    <b>Business message:</b> useful AI inference can run on a few watts.
   </div>
 </div>
 """,
@@ -83,25 +83,25 @@ if orbital_mode.startswith("🔋"):
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        metric_card("⚡ Puissance", "1 – 2 W", "Accélérateur IA économe")
+        metric_card("Power", "1 – 2 W", "Low-power AI accelerator")
     with c2:
-        metric_card("🧠 RAM", "512 MB", "DDR / on-chip")
+        metric_card("RAM", "512 MB", "DDR / on-chip")
     with c3:
-        metric_card("⏱️ Inférence", "500 – 1000 ms", "Par tile 640×640")
+        metric_card("Inference", "500 – 1000 ms", "Per 640×640 tile")
     with c4:
-        metric_card("📦 Packet", "~1.2 kB", "Même format")
+        metric_card("Packet", "~1.2 kB", "Same format")
 
-    st.markdown("**Contraintes LP :**")
+    st.markdown("**LP constraints:**")
     st.table(pd.DataFrame({
-        "Paramètre": ["Compute", "RAM", "Stockage", "Puissance", "Inférence / tile", "Modèle max", "OS"],
-        "Valeur": [
+        "Parameter": ["Compute", "RAM", "Storage", "Power", "Inference / tile", "Max model", "OS"],
+        "Value": [
             "Intel Myriad X / edge TPU",
             "256 – 512 MB",
             "8 – 32 GB eMMC",
             "1 – 2 W",
             "500 – 1000 ms",
             "~20 MB ONNX INT8",
-            "Linux embedded / RTOS",
+            "Embedded Linux / RTOS",
         ],
     }))
 
@@ -109,12 +109,12 @@ else:
     st.markdown(
         """
 <div class="edge-card">
-  <div style="font-weight:700;font-size:18px;margin-bottom:12px;">
-    🖥️ Profil HP — Rugged x86 + GPU (classe avionique)
+  <div style="font-weight:600;font-size:16px;margin-bottom:12px;letter-spacing:-0.01em;">
+    HP profile — Rugged x86 + GPU (avionics class)
   </div>
-  <div style="color:#4b4f6b;font-size:14px;">
-    <b>Référence :</b> Moog Deep Delphi iX5 — AMD64, Linux, GPU compute ~77 GFLOP.<br/>
-    <b>Message business :</b> <i>"On peut embarquer un vrai compute edge si le payload le justifie."</i>
+  <div style="color:#5c5e62;font-size:14px;line-height:1.6;">
+    <b>Reference:</b> Moog Deep Delphi iX5 — AMD64, Linux, GPU compute ~77 GFLOP.<br/>
+    <b>Business message:</b> a real edge compute can fly when the payload justifies it.
   </div>
 </div>
 """,
@@ -123,24 +123,24 @@ else:
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        metric_card("⚡ Puissance", "15 – 25 W", "GPU + CPU")
+        metric_card("Power", "15 – 25 W", "GPU + CPU")
     with c2:
-        metric_card("🧠 RAM", "2 GB ECC", "DDR3 ECC + 0.5 GB FPGA")
+        metric_card("RAM", "2 GB ECC", "DDR3 ECC + 0.5 GB FPGA")
     with c3:
-        metric_card("⏱️ Inférence", "30 – 80 ms", "Par tile 640×640")
+        metric_card("Inference", "30 – 80 ms", "Per 640×640 tile")
     with c4:
-        metric_card("📦 Packet", "~1.2 kB", "Même format")
+        metric_card("Packet", "~1.2 kB", "Same format")
 
-    st.markdown("**Contraintes HP :**")
+    st.markdown("**HP constraints:**")
     st.table(pd.DataFrame({
-        "Paramètre": [
-            "Compute", "RAM", "Stockage", "GPU", "Puissance",
-            "Inférence / tile", "Modèle max", "OS",
+        "Parameter": [
+            "Compute", "RAM", "Storage", "GPU", "Power",
+            "Inference / tile", "Max model", "OS",
         ],
-        "Valeur": [
+        "Value": [
             "AMD64 (x86)",
             "2 GB DDR3 ECC + 0.5 GB FPGA",
-            "eMMC + jusqu'à 768 GB SSD M.2",
+            "eMMC + up to 768 GB SSD M.2",
             "~77 GFLOP",
             "15 – 25 W",
             "30 – 80 ms",
@@ -152,7 +152,7 @@ else:
 st.divider()
 
 # ── Compatibilité modèle ─────────────────────────────────────────────────────
-st.markdown("### 📐 Compatibilité du modèle actuel")
+st.markdown("### Current model compatibility")
 
 onnx_fp32 = ROOT / "models" / "weights" / "best.onnx"
 onnx_int8 = ROOT / "models" / "weights" / "best.int8.onnx"
@@ -167,31 +167,31 @@ for label, path, max_lp, max_hp in [
     if path.exists():
         size = model_size_mb(path)
         compat_rows.append({
-            "Modèle": label,
-            "Taille (MB)": f"{size:.1f}",
-            "LP compatible": "✅" if size <= max_lp else "❌",
-            "HP compatible": "✅" if size <= max_hp else "⚠️",
+            "Model": label,
+            "Size (MB)": f"{size:.1f}",
+            "LP compatible": "Yes" if size <= max_lp else "No",
+            "HP compatible": "Yes" if size <= max_hp else "Marginal",
         })
 
 if compat_rows:
     st.table(pd.DataFrame(compat_rows))
 else:
-    st.info("Aucun modèle disponible. L'entraînement est peut-être en cours…")
+    st.info("No model available. Training may still be in progress.")
 
 st.divider()
 
 # ── Plateforme satellite ──────────────────────────────────────────────────────
-st.markdown("### 🚀 Plateforme satellite (hosted payload)")
+st.markdown("### Satellite platform (hosted payload)")
 
 st.markdown(
     """
 <div class="edge-card">
-  <div style="font-weight:700;font-size:16px;margin-bottom:10px;">
-    Intégration type : D-Orbit ION Satellite Carrier (hosted payload)
+  <div style="font-weight:600;font-size:15px;margin-bottom:10px;">
+    Reference integration: D-Orbit ION Satellite Carrier (hosted payload)
   </div>
-  <div style="color:#4b4f6b;font-size:14px;">
-    Vous ne construisez pas une constellation : vous embarquez votre compute + votre app
-    sur une plateforme existante.
+  <div style="color:#5c5e62;font-size:14px;line-height:1.6;">
+    The mission does not require building a constellation. Compute and application are
+    embedded on an existing platform.
   </div>
 </div>
 """,
@@ -199,72 +199,69 @@ st.markdown(
 )
 
 st.table(pd.DataFrame({
-    "Paramètre": [
-        "Télécom S-band (omni)",
-        "Télécom X-band (directionnel)",
-        "Interfaces data",
-        "Stockage OBDH",
-        "Mise à jour en orbite",
-        "Orbite type",
+    "Parameter": [
+        "Telecom S-band (omni)",
+        "Telecom X-band (directional)",
+        "Data interfaces",
+        "OBDH storage",
+        "In-orbit update",
+        "Reference orbit",
     ],
-    "Valeur": [
-        "≈ 500 kbps — suffisant pour event packets",
-        "> 50 Mbps — backup pour evidence / thumbnails",
+    "Value": [
+        "≈ 500 kbps — sufficient for event packets",
+        "> 50 Mbps — backup for evidence and thumbnails",
         "Ethernet, USB/UART, SPI, I2C",
-        "Jusqu'à 128 Gb + SSD M.2",
-        "✅ Upload nouvelle version modèle (continuous improvement)",
-        "LEO 500-600 km, SSO",
+        "Up to 128 Gb + SSD M.2",
+        "Supported (continuous improvement of the model)",
+        "LEO 500–600 km, sun-synchronous",
     ],
 }))
 
 st.divider()
 
 # ── Latence : justification quasi temps réel ──────────────────────────────────
-st.markdown("### ⏱️ Justification « quasi temps réel »")
+st.markdown("### Near real-time — justification")
 
 st.code(
     """
-┌─────────────────┐     ┌──────────────┐     ┌──────────────┐     ┌─────────┐
-│  🛰️ On-board    │ ──▶ │  📡 Downlink  │ ──▶ │  🌍 Ground   │ ──▶ │ 🔔 API  │
-│  Inférence      │     │  S/X-band    │     │  Station     │     │ Webhook │
-│  T_infer        │     │  T_downlink  │     │  T_buffer    │     │ T_api   │
-│  50 ms – 1 s    │     │  < 1 s       │     │  variable    │     │ < 1 s   │
-└─────────────────┘     └──────────────┘     └──────────────┘     └─────────┘
+On-board inference  ->  Downlink S/X-band  ->  Ground station  ->  API webhook
+T_infer                T_downlink              T_buffer            T_api
+50 ms - 1 s            < 1 s                   variable            < 1 s
 """,
     language="text",
 )
 
 st.markdown("""
-**Relais GEO pour réduire T_buffer :**
-- **TDRS (NASA)** : couverture LEO ~15 % → > 95 % via relais GEO
-- **SpaceDataHighway (ESA / Airbus)** : relais optique LEO → GEO, latence < 1 s
-- **Relais commerciaux US** : "real-time tasking & data dissemination"
+**GEO relay reduces T_buffer:**
+- **TDRS (NASA)**: LEO coverage ~15% → > 95% via GEO relay
+- **SpaceDataHighway (ESA / Airbus)**: optical LEO → GEO relay, latency < 1 s
+- **Commercial US relays**: real-time tasking and data dissemination
 """)
 
 st.table(pd.DataFrame({
-    "Scénario": [
-        "Direct station sol",
-        "Relais GEO",
+    "Scenario": [
+        "Direct ground station",
+        "GEO relay",
     ],
     "T_infer": ["50 ms", "50 ms"],
-    "T_buffer": ["~5 min (pire cas)", "< 10 s"],
+    "T_buffer": ["~5 min (worst case)", "< 10 s"],
     "T_downlink": ["< 1 s", "< 1 s"],
     "T_api": ["< 1 s", "< 1 s"],
     "Total P50": ["~5 min", "< 15 sec"],
     "Total P95": ["~15 min", "< 60 sec"],
 }))
 
-st.caption("Le goulot est **T_buffer** (attente fenêtre de contact) — pas l'IA.")
+st.caption("The bottleneck is T_buffer (contact-window wait), not the AI inference.")
 
 st.divider()
 
 # ── Key message ───────────────────────────────────────────────────────────────
 st.markdown(
     """
-<div class="edge-card" style="text-align:center;padding:24px;border-left:4px solid #16a34a;">
-  <div style="font-size:18px;font-weight:700;">
-    🎯 Le PoC génère <u>exactement</u> le même event packet que l'orbite.<br/>
-    Seul le transport change (simulateur de downlink ↔ lien S/X-band réel).
+<div class="edge-card" style="text-align:center;padding:24px;">
+  <div style="font-size:16px;font-weight:500;color:#171a20;line-height:1.6;">
+    The PoC produces the same event packet as the orbital deployment.<br/>
+    Only the transport changes — downlink simulator on the ground, S/X-band link in flight.
   </div>
 </div>
 """,

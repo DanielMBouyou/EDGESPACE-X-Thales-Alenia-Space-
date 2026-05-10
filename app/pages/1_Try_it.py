@@ -24,7 +24,7 @@ from src.utils.hashing import sha256_bytes, sha256_file
 from src.utils.image import draw_bboxes, load_image_from_bytes
 from src.utils.timing import timing
 
-st.set_page_config(page_title="EDGE SPACE — Try it", page_icon="🔥", layout="wide")
+st.set_page_config(page_title="EDGE SPACE — Try it", layout="wide")
 load_dotenv()
 apply_theme()
 init_state()
@@ -41,8 +41,8 @@ def get_onnx_session(path: str):
 
 
 header(
-    "🔬 Try it — Bac à sable",
-    "Upload une image satellite, observe le pipeline complet, récupère l'event packet.",
+    "Try it — Sandbox",
+    "Upload a satellite image, observe the full pipeline, retrieve the event packet.",
 )
 
 st.write("")
@@ -51,41 +51,41 @@ st.write("")
 left, right = st.columns([2, 1])
 with left:
     mode = st.radio(
-        "Mode runtime",
-        ["Sol (PyTorch GPU/CPU)", "Orbite (ONNX quantifié)"],
+        "Runtime mode",
+        ["Ground (PyTorch GPU/CPU)", "Orbit (quantized ONNX)"],
         horizontal=True,
-        help="Sol = modèle PyTorch complet. Orbite = modèle ONNX optimisé comme en vol.",
+        help="Ground = full PyTorch model. Orbit = ONNX model, optimized as in flight.",
     )
-    conf_threshold = st.slider("Seuil de confiance", 0.1, 0.95, 0.25, 0.05)
+    conf_threshold = st.slider("Confidence threshold", 0.1, 0.95, 0.25, 0.05)
 
 with right:
-    st.markdown("**🛰️ Simulateur downlink**")
+    st.markdown("**Downlink simulator**")
     orbital_profile = st.selectbox(
-        "Profil orbital", ["LP — Low Power (Φ-Sat)", "HP — High Perf (Moog iX5)"]
+        "Orbital profile", ["LP — Low Power (Φ-Sat)", "HP — High Perf (Moog iX5)"]
     )
     transmission = st.selectbox(
-        "Liaison", ["Direct Station Sol", "Relais GEO (TDRS / SpaceDataHighway)"]
+        "Link", ["Direct ground station", "GEO relay (TDRS / SpaceDataHighway)"]
     )
-    downlink_delay = st.number_input("Délai downlink (sec)", 0.0, 60.0, 3.5, 0.5)
-    queue_delay = st.number_input("Délai queue (sec)", 0.0, 30.0, 1.2, 0.5)
+    downlink_delay = st.number_input("Downlink delay (sec)", 0.0, 60.0, 3.5, 0.5)
+    queue_delay = st.number_input("Queue delay (sec)", 0.0, 30.0, 1.2, 0.5)
 
 st.divider()
 
 # ── Upload ────────────────────────────────────────────────────────────────────
-st.markdown("### 📤 Upload")
-upload_tab, sample_tab = st.tabs(["📁 Drag & Drop", "📎 Échantillons démo"])
+st.markdown("### Upload")
+upload_tab, sample_tab = st.tabs(["Drag & drop", "Demo samples"])
 
 with upload_tab:
     col_single, col_batch = st.columns(2)
     with col_single:
         uploaded = st.file_uploader(
-            "Image unique (jpg / png / tif)",
+            "Single image (jpg / png / tif)",
             type=["jpg", "jpeg", "png", "tif", "tiff"],
             key="single_upload",
         )
     with col_batch:
         uploaded_zip = st.file_uploader(
-            "Batch (ZIP) — simule un passage satellite",
+            "Batch (ZIP) — simulates a satellite pass",
             type=["zip"],
             key="batch_upload",
         )
@@ -106,10 +106,10 @@ with sample_tab:
         for idx, p in enumerate(samples[:6]):
             with thumb_cols[idx % len(thumb_cols)]:
                 st.image(p.read_bytes(), caption=p.name, width=100)
-        sample_choice = st.selectbox("Choisir un échantillon", [p.name for p in samples])
-        use_sample = st.button("Utiliser cet échantillon")
+        sample_choice = st.selectbox("Choose a sample", [p.name for p in samples])
+        use_sample = st.button("Use this sample")
     else:
-        st.info("Aucun échantillon dans `datasets/demo_samples/`. Ajoutez des images satellite.")
+        st.info("No samples in `datasets/demo_samples/`. Add satellite images.")
         sample_choice = None
         use_sample = False
 
@@ -122,7 +122,7 @@ elif uploaded_zip is not None:
         for name in zf.namelist():
             if name.lower().endswith((".jpg", ".jpeg", ".png", ".tif", ".tiff")):
                 images_to_process.append((name, zf.read(name)))
-    st.success(f"📦 Batch : {len(images_to_process)} images extraites du ZIP")
+    st.success(f"Batch: {len(images_to_process)} images extracted from the ZIP")
 elif use_sample and sample_choice:
     sp = sample_dir / sample_choice
     images_to_process.append((sample_choice, sp.read_bytes()))
@@ -130,19 +130,19 @@ elif use_sample and sample_choice:
 st.divider()
 
 # ── Run pipeline ──────────────────────────────────────────────────────────────
-run = st.button("🚀 Lancer la détection", type="primary", use_container_width=True)
+run = st.button("Run detection", type="primary", use_container_width=True)
 
 if run and not images_to_process:
-    st.warning("⚠️ Upload une image ou choisis un échantillon d'abord.")
+    st.warning("Upload an image or pick a sample first.")
 
 if run and images_to_process:
     all_packets: List[dict] = []
     all_detections_list: List[list] = []
-    progress = st.progress(0, text="Initialisation…")
+    progress = st.progress(0, text="Initializing…")
     total = len(images_to_process)
 
     for img_idx, (img_name, image_bytes) in enumerate(images_to_process):
-        st.markdown(f"---\n**Image {img_idx + 1}/{total}** : `{img_name}`")
+        st.markdown(f"---\n**Image {img_idx + 1}/{total}**: `{img_name}`")
         image = load_image_from_bytes(image_bytes)
         input_hash = sha256_bytes(image_bytes)
         timings: Dict[str, float] = {}
@@ -154,25 +154,25 @@ if run and images_to_process:
         )
         with timing(timings, "ingestion"):
             orig_w, orig_h = image.size
-        st.caption(f"📐 {orig_w}×{orig_h} px | Hash: `{input_hash[:16]}…`")
+        st.caption(f"{orig_w}×{orig_h} px | Hash: `{input_hash[:16]}…`")
 
-        # STEP 2 — Pré-traitement
+        # STEP 2 — Pre-processing
         progress.progress(
             (img_idx * 5 + 2) / (total * 5),
-            text=f"[{img_idx+1}/{total}] 2/5 — Pré-traitement…",
+            text=f"[{img_idx+1}/{total}] 2/5 — Pre-processing…",
         )
         with timing(timings, "preprocess_step"):
             pass  # resize handled inside predict
 
-        # STEP 3 — Inférence
+        # STEP 3 — Inference
         progress.progress(
             (img_idx * 5 + 3) / (total * 5),
-            text=f"[{img_idx+1}/{total}] 3/5 — Inférence IA…",
+            text=f"[{img_idx+1}/{total}] 3/5 — Inference…",
         )
-        if mode.startswith("Sol"):
+        if mode.startswith("Ground"):
             weights = ROOT / "models" / "weights" / "best.pt"
             if not weights.exists():
-                st.error("❌ Modèle manquant : `models/weights/best.pt`. Entraîne d'abord.")
+                st.error("Missing model: `models/weights/best.pt`. Train first.")
                 st.stop()
             model = get_pt_model(str(weights))
             detections, det_timings = predict_pt(
@@ -185,7 +185,7 @@ if run and images_to_process:
             onnx_fp32 = ROOT / "models" / "weights" / "best.onnx"
             onnx_path = onnx_int8 if onnx_int8.exists() else onnx_fp32
             if not onnx_path.exists():
-                st.error("❌ Modèle ONNX manquant. Exporte avec `src/infer/export_onnx.py`.")
+                st.error("ONNX model missing. Export with `src/infer/export_onnx.py`.")
                 st.stop()
             session = get_onnx_session(str(onnx_path))
             input_name = session.get_inputs()[0].name
@@ -196,10 +196,10 @@ if run and images_to_process:
             model_hash = sha256_file(onnx_path)
         timings.update(det_timings)
 
-        # STEP 4 — Post-traitement
+        # STEP 4 — Post-processing
         progress.progress(
             (img_idx * 5 + 4) / (total * 5),
-            text=f"[{img_idx+1}/{total}] 4/5 — Post-traitement…",
+            text=f"[{img_idx+1}/{total}] 4/5 — Post-processing…",
         )
         with timing(timings, "postprocess_extra"):
             n_det = len(detections)
@@ -207,7 +207,7 @@ if run and images_to_process:
         # STEP 5 — Event Packet
         progress.progress(
             (img_idx * 5 + 5) / (total * 5),
-            text=f"[{img_idx+1}/{total}] 5/5 — Event Packet…",
+            text=f"[{img_idx+1}/{total}] 5/5 — Event packet…",
         )
         # Evidence thumbnail
         thumb = image.copy()
@@ -250,37 +250,37 @@ if run and images_to_process:
             image,
             [d["bbox_px"] for d in detections],
             [f"fire {d['confidence']:.0%}" for d in detections],
-            color=(255, 80, 0),
-            width=3,
+            color=(23, 26, 32),
+            width=2,
         )
 
         col_orig, col_annot = st.columns(2)
         with col_orig:
-            st.image(image, caption="Image originale", use_container_width=True)
+            st.image(image, caption="Original image", use_container_width=True)
         with col_annot:
-            st.image(annotated, caption=f"Détections : {n_det} feu(x)", use_container_width=True)
+            st.image(annotated, caption=f"Detections: {n_det} fire(s)", use_container_width=True)
 
         pipeline_bar([
             ("1. Ingestion", "ok"),
-            ("2. Pré-traitement", "ok"),
-            ("3. Inférence", "ok"),
-            ("4. Post-traitement", "ok"),
-            ("5. Event Packet", "ok"),
+            ("2. Pre-processing", "ok"),
+            ("3. Inference", "ok"),
+            ("4. Post-processing", "ok"),
+            ("5. Event packet", "ok"),
         ])
 
-        st.markdown("**⏱️ Chronométrage (ms)**")
+        st.markdown("**Timing (ms)**")
         st.dataframe(
             pd.DataFrame([{k: f"{v:.1f}" for k, v in timings.items()}]),
             use_container_width=True,
         )
 
         if detections:
-            st.markdown(f"**🔥 {n_det} détection(s)**")
+            st.markdown(f"**{n_det} detection(s)**")
             st.dataframe(pd.DataFrame(detections), use_container_width=True)
         else:
-            st.info("Aucun feu détecté sur cette image.")
+            st.info("No fire detected on this image.")
 
-    progress.progress(1.0, text="✅ Terminé !")
+    progress.progress(1.0, text="Done.")
 
     # Store
     st.session_state.last_packet = all_packets[-1] if all_packets else None
@@ -290,14 +290,14 @@ if run and images_to_process:
 
     # ── Event Packet JSON ─────────────────────────────────────────────────────
     st.divider()
-    st.markdown("### 📋 Event Packet JSON")
+    st.markdown("### Event packet — JSON")
     packet_json = json.dumps(all_packets[-1], indent=2)
     st.code(packet_json, language="json")
     packet_size_kb = len(packet_json.encode()) / 1024
-    st.metric("📦 Taille du packet", f"{packet_size_kb:.2f} kB")
+    st.metric("Packet size", f"{packet_size_kb:.2f} kB")
 
     st.download_button(
-        "⬇️ Télécharger Event Packet",
+        "Download event packet",
         data=packet_json,
         file_name=f"event_packet_{all_packets[-1]['event_id'][:8]}.json",
         mime="application/json",
@@ -305,7 +305,7 @@ if run and images_to_process:
     if len(all_packets) > 1:
         all_json = json.dumps(all_packets, indent=2)
         st.download_button(
-            f"⬇️ Télécharger tous les packets ({len(all_packets)})",
+            f"Download all packets ({len(all_packets)})",
             data=all_json,
             file_name="event_packets_batch.json",
             mime="application/json",
@@ -313,25 +313,25 @@ if run and images_to_process:
 
     # ── Audit Trail ───────────────────────────────────────────────────────────
     st.divider()
-    st.markdown("### 🔒 Audit Trail")
+    st.markdown("### Audit trail")
     ac1, ac2, ac3 = st.columns(3)
     with ac1:
-        st.text_input("Hash entrée (SHA-256)", value=input_hash, disabled=True)
+        st.text_input("Input hash (SHA-256)", value=input_hash, disabled=True)
     with ac2:
-        st.text_input("Hash modèle", value=model_hash[:32] + "…", disabled=True)
+        st.text_input("Model hash", value=model_hash[:32] + "…", disabled=True)
     with ac3:
         st.text_input(
-            "Hash packet",
+            "Packet hash",
             value=all_packets[-1]["integrity"]["packet_hash"][:32] + "…",
             disabled=True,
         )
 
     # ── Webhook ───────────────────────────────────────────────────────────────
     st.divider()
-    st.markdown("### 📡 Webhook Test")
-    webhook_url = st.text_input("URL webhook", value="http://127.0.0.1:8000/webhook")
-    if st.button("📤 Envoyer le webhook"):
-        with st.spinner("Envoi en cours…"):
+    st.markdown("### Webhook test")
+    webhook_url = st.text_input("Webhook URL", value="http://127.0.0.1:8000/webhook")
+    if st.button("Send webhook"):
+        with st.spinner("Sending…"):
             status, body, latency = post_webhook(webhook_url, all_packets[-1])
         st.session_state.last_webhook_status = status
         st.session_state.last_webhook_latency = latency
@@ -344,11 +344,11 @@ if run and images_to_process:
             }
         )
         if 200 <= status < 300:
-            st.success(f"✅ Envoyé — HTTP {status} en {latency:.1f} ms")
+            st.success(f"Sent — HTTP {status} in {latency:.1f} ms")
         else:
             st.session_state.errors_log.append(
                 {"event_id": all_packets[-1]["event_id"], "error": body[:200]}
             )
-            st.error(f"❌ Échec — HTTP {status} : {body[:200]}")
-        st.markdown("**Payload envoyé :**")
+            st.error(f"Failed — HTTP {status}: {body[:200]}")
+        st.markdown("**Payload sent:**")
         st.code(json.dumps(all_packets[-1], indent=2)[:2000], language="json")

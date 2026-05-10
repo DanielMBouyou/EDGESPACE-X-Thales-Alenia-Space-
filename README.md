@@ -1,47 +1,46 @@
-# 🛰️🔥 EDGE SPACE — Satellite Wildfire Detection
+# EDGE SPACE — Satellite Wildfire Detection
 
-> **Détection rapide des feux de forêt à partir d'images satellites et d'IA embarquée.**
-> On ne downlink pas des images — on downlink des **alertes vérifiables**.
+> Wildfire detection from satellite imagery using on-board AI. The satellite does not downlink images — it downlinks verifiable, signed event packets.
 
-**Projet startup — Incubateur Thales**
+Project developed within the Thales Incubator.
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://edgespace.streamlit.app)
 
 ---
 
-## 🎯 Concept
+## Concept
 
-EDGE SPACE embarque un modèle **YOLO11s** directement sur le satellite. Au lieu de télécharger des images brutes (50–500 MB), le satellite transmet des **event packets signés** (~1.2 kB) contenant uniquement les détections, métadonnées et preuves cryptographiques.
+EDGE SPACE runs a YOLO11s detector directly on the satellite. Instead of transmitting raw images (50–500 MB), the satellite emits compact signed event packets (~1.2 kB) containing the detections, metadata and cryptographic evidence required to verify them on the ground.
 
-| | Approche classique | EDGE SPACE |
+| | Classic approach | EDGE SPACE |
 |---|---|---|
-| **Donnée transmise** | Image brute 50–500 MB | Event packet ~1.2 kB |
-| **Temps downlink** | 13–130 min (S-band) | < 1 sec |
-| **Latence alerte** | Heures | **< 90 sec** |
-| **Réduction volume** | — | **99.99 %** |
+| Transmitted data | Raw image, 50–500 MB | Event packet, ~1.2 kB |
+| Downlink time | 13–130 min (S-band) | < 1 sec |
+| Alert latency | Hours | < 90 sec |
+| Volume reduction | — | 99.99 % |
 
 ---
 
-## 📊 Performance du modèle
+## Model performance
 
-| Métrique | Valeur |
+| Metric | Value |
 |---|---|
-| Modèle | YOLO11s (9.4M params, 21.5 GFLOPs) |
-| Dataset | [Satellite Inferno](https://universe.roboflow.com/) — 21 087 train / 2 009 val / 1 005 test |
-| Classe | `fire` (1 classe) |
+| Model | YOLO11s (9.4M parameters, 21.5 GFLOPs) |
+| Dataset | [Satellite Inferno](https://universe.roboflow.com/) — 21,087 train / 2,009 val / 1,005 test |
+| Class | `fire` (single class) |
 | Epochs | 27 |
-| **mAP@50** | **52.0 %** |
-| **mAP@50-95** | **27.5 %** |
+| mAP@50 | 52.0 % |
+| mAP@50-95 | 27.5 % |
 | Precision | 60.5 % |
 | Recall | 48.1 % |
 | Runtime | PyTorch FP32 / ONNX FP32 |
-| GPU entraînement | NVIDIA RTX 4050 Laptop (6 GB VRAM) |
+| Training GPU | NVIDIA RTX 4050 Laptop (6 GB VRAM) |
 
 ---
 
-## 📦 Event Packet
+## Event packet
 
-C'est **exactement** ce qui est transmis du satellite au sol — pas l'image.
+This is exactly what is transmitted from the satellite to the ground — not the image.
 
 ```json
 {
@@ -62,53 +61,54 @@ C'est **exactement** ce qui est transmis du satellite au sol — pas l'image.
 }
 ```
 
-**~1.2 kB** vs ~50 MB image brute → **×41 000 plus compact**.
+~1.2 kB versus ~50 MB for a raw image — a 41,000× reduction.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
-📷 Image satellite (640×640)
-     │
-     ▼
-┌──────────┐  ┌───────────┐  ┌──────────┐  ┌─────────┐  ┌────────┐
-│ Ingestion│─▶│Pré-process│─▶│Inférence │─▶│Post-NMS │─▶│ Packet │
-│ load/tile│  │resize/norm│  │ YOLO11s  │  │filtrage │  │ signer │
-└──────────┘  └───────────┘  │ ONNX/PT  │  └─────────┘  └───┬────┘
-                             └──────────┘                    │
-                                                    ┌───────┤
-                                                    ▼       ▼
-                                             ┌──────────┐ ┌─────────┐
-                                             │ Evidence │ │ Webhook │
-                                             │thumb+hash│ │POST API │
-                                             └──────────┘ └─────────┘
+Satellite tile (640x640)
+    |
+    v
++----------+   +-------------+   +----------+   +---------+   +--------+
+| Ingest   |-->| Pre-process |-->| Inference|-->| Post-NMS|-->| Packet |
+| load     |   | resize/norm |   | YOLO11s  |   | filter  |   | signer |
++----------+   +-------------+   | ONNX/PT  |   +---------+   +---+----+
+                                 +----------+                     |
+                                                       +----------+
+                                                       |          |
+                                                       v          v
+                                                +----------+ +---------+
+                                                | Evidence | | Webhook |
+                                                |thumb+hash| |POST API |
+                                                +----------+ +---------+
 ```
 
-**3 blocs logiciels :**
+Three software blocks:
 
-1. **UI Streamlit** — vitrine + bac à sable de test *(démo uniquement)*
-2. **Inference Engine** (`src/infer/`) — runtime ONNX/PyTorch, déterministe *(sol + orbite)*
-3. **Packetizer + Signer** — event packet JSON, SHA-256 + HMAC *(sol + orbite)*
+1. **UI Streamlit** — showcase and test sandbox (demo only).
+2. **Inference engine** (`src/infer/`) — deterministic ONNX/PyTorch runtime (ground and orbit).
+3. **Packetizer + signer** — JSON event packet, SHA-256 + HMAC (ground and orbit).
 
 ---
 
-## 🚀 Streamlit PoC — 7 pages
+## Streamlit PoC — seven pages
 
 | Page | Description |
 |---|---|
-| 🏠 **Home** | Hero, KPIs clés, comparatif image vs packet |
-| 🔬 **Try it** | Upload → pipeline 5 étapes → event packet → webhook |
-| 📊 **KPIs** | Métriques modèle, taille payload, budget latence |
-| 🛰️ **Satellite Proof** | Profils LP/HP, specs D-Orbit ION, latence P50/P95 |
-| 🏗️ **Architecture** | 3 blocs, pipeline, Dockerfile, continuous improvement |
-| 🔒 **Security** | Chaîne d'intégrité SHA-256→HMAC, reproductibilité |
-| 📡 **API** | Schéma JSON, webhook test, mock server, cURL |
-| 📜 **Logs** | Journal events/erreurs, export JSON, audit |
+| Home | Hero, key KPIs, image vs packet comparison |
+| Try it | Upload → five-step pipeline → event packet → webhook |
+| KPIs | Model metrics, payload size, latency budget |
+| Satellite proof | LP/HP profiles, D-Orbit ION specifications, P50/P95 latency |
+| Architecture | Three blocks, pipeline, Dockerfile, continuous improvement |
+| Security | SHA-256 → HMAC integrity chain, reproducibility |
+| API | JSON schema, webhook test, mock server, cURL |
+| Logs | Events / errors journal, JSON export, audit |
 
 ---
 
-## 🛠️ Installation
+## Installation
 
 ```bash
 git clone https://github.com/your-org/edgespace.git
@@ -123,7 +123,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### GPU (entraînement / inférence rapide)
+### GPU (training and faster inference)
 
 ```bash
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
@@ -132,115 +132,118 @@ pip install ultralytics
 
 ---
 
-## ▶️ Utilisation
+## Usage
 
-### Lancer le PoC Streamlit
+### Run the Streamlit PoC
 
 ```bash
 streamlit run Home.py
 ```
 
-### Entraînement
+### Training
 
 ```bash
 python src/train/train_optimized.py
 ```
 
-### Reprendre un entraînement interrompu
+### Resume an interrupted training run
 
 ```bash
 python scripts/resume_training.py
 ```
 
-### Export ONNX
+### ONNX export
 
 ```bash
 python -c "from ultralytics import YOLO; YOLO('models/weights/best.pt').export(format='onnx', simplify=True)"
 ```
 
-### Serveur mock webhook
+### Mock webhook server
 
 ```bash
 python scripts/mock_webhook.py
-# Écoute sur http://127.0.0.1:8000/webhook
+# Listening on http://127.0.0.1:8000/webhook
 ```
 
 ---
 
-## 📁 Structure du projet
+## Project structure
 
 ```
-├── Home.py                   # Point d'entrée Streamlit
-├── streamlit_app.py          # Alias Cloud
+.
+├── Home.py                   # Streamlit entry point
+├── streamlit_app.py          # Cloud alias
 ├── requirements.txt
+├── packages.txt              # apt packages for Streamlit Cloud (libgl1, libglib2.0-0)
 ├── app/
-│   ├── Home.py               # Page d'accueil (hero + KPIs)
-│   ├── pages/                # 7 pages Streamlit
-│   ├── ui.py                 # Composants UI (theme, cards)
+│   ├── Home.py               # Landing page (hero + KPIs)
+│   ├── pages/                # Seven Streamlit pages
+│   ├── ui.py                 # UI components (theme, cards)
 │   ├── state.py              # Session state
 │   └── utils.py              # ROOT path
 ├── src/
 │   ├── infer/                # Inference engine
-│   │   ├── predict_pt.py     # Inférence PyTorch
-│   │   ├── predict_onnx.py   # Inférence ONNX
-│   │   ├── event_packet.py   # Génération event packet
-│   │   ├── webhook.py        # Client webhook
-│   │   └── runtime.py        # Chargement modèles
-│   ├── train/                # Scripts d'entraînement
-│   ├── convert/              # Conversion datasets
+│   │   ├── predict_pt.py     # PyTorch inference
+│   │   ├── predict_onnx.py   # ONNX inference
+│   │   ├── event_packet.py   # Event packet generation
+│   │   ├── webhook.py        # Webhook client
+│   │   └── runtime.py        # Model loading
+│   ├── train/                # Training scripts
+│   ├── convert/              # Dataset conversion
 │   └── utils/                # Hashing, timing, NMS, image
 ├── models/weights/           # best.pt / best.onnx (gitignored)
-├── datasets/                 # Données d'entraînement (gitignored)
+├── datasets/                 # Training data (gitignored)
 ├── pages/                    # Proxy → app/pages/ (multi-page Streamlit)
-├── scripts/                  # Utilitaires (download, resume, mock)
-└── runs/                     # Résultats training
-    └── summary.json          # Métriques finales (versionné)
+├── scripts/                  # Utilities (download, resume, mock)
+└── runs/                     # Training results
+    └── summary.json          # Final metrics (versioned)
 ```
 
 ---
 
-## 🔒 Sécurité & Intégrité
+## Security and integrity
 
 ```
-📷 Image → SHA-256 → input_hash
-🧠 Modèle → SHA-256 → model_hash
-📋 Packet → SHA-256 → packet_hash → HMAC-SHA256(secret) → signature
+Image  -> SHA-256 -> input_hash
+Model  -> SHA-256 -> model_hash
+Packet -> SHA-256 -> packet_hash -> HMAC-SHA256(secret) -> signature
 ```
 
-- **Reproductibilité** : mêmes entrées → mêmes sorties (NMS déterministe, pas de random)
-- **Traçabilité** : chaque packet contient hash entrée + hash modèle + signature
-- **Vérification** : HMAC-SHA256 avec shared secret
+- **Reproducibility**: same input → same output (deterministic NMS, no randomness).
+- **Traceability**: every packet contains the input hash, model hash and signature.
+- **Verification**: HMAC-SHA256 with a shared secret.
 
 ---
 
-## 🛰️ Compatibilité orbitale
+## Orbital compatibility
 
-| Profil | Compute | Puissance | Inférence/tile | Référence |
+| Profile | Compute | Power | Inference / tile | Reference |
 |---|---|---|---|---|
-| **LP** (Low Power) | Intel Myriad X | 1–2 W | 500–1000 ms | Φ-Sat-2 |
-| **HP** (High Perf) | AMD64 + GPU | 15–25 W | 30–80 ms | Moog iX5 |
+| LP (Low Power) | Intel Myriad X | 1–2 W | 500–1000 ms | Φ-Sat-2 |
+| HP (High Perf) | AMD64 + GPU | 15–25 W | 30–80 ms | Moog iX5 |
 
-**Plateforme cible** : D-Orbit ION Satellite Carrier (hosted payload)
-- Télécom S-band ~500 kbps (suffisant pour event packets)
-- Télécom X-band >50 Mbps (backup evidence)
-- Mise à jour modèle en orbite ✅
+Target platform: D-Orbit ION Satellite Carrier (hosted payload).
+
+- S-band telemetry ~500 kbps (sufficient for event packets)
+- X-band telemetry > 50 Mbps (backup for evidence)
+- In-orbit model update supported
 
 ---
 
-## 🌐 Variables d'environnement
+## Environment variables
 
-| Variable | Description | Défaut |
+| Variable | Description | Default |
 |---|---|---|
-| `EDGE_SPACE_HMAC_SECRET` | Secret HMAC pour signature packets | `demo-secret` |
+| `EDGE_SPACE_HMAC_SECRET` | HMAC secret for packet signature | `demo-secret` |
 
-Créer un fichier `.env` à la racine (gitignored).
-
----
-
-## 📜 Licence
-
-Projet interne — Incubateur Thales.
+Create a `.env` file at the project root (gitignored).
 
 ---
 
-*EDGE SPACE — Détection rapide des feux de forêt à partir d'images satellites et d'IA embarquée · Incubateur Thales*
+## License
+
+Internal project — Thales Incubator.
+
+---
+
+*EDGE SPACE — Wildfire detection from satellite imagery using on-board AI · Thales Incubator*

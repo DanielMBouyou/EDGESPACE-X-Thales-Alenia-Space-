@@ -5,28 +5,28 @@ import streamlit as st
 from app.state import init_state
 from app.ui import apply_theme, header
 
-st.set_page_config(page_title="EDGE SPACE — Architecture", page_icon="🏗️", layout="wide")
+st.set_page_config(page_title="EDGE SPACE — Architecture", layout="wide")
 apply_theme()
 init_state()
 
-header("🏗️ Architecture", "3 blocs logiciels — du PoC à l'orbite, même code.")
+header("Architecture", "Three software blocks. Same code from PoC to orbit.")
 
 st.write("")
 
 # ── 3 blocs ───────────────────────────────────────────────────────────────────
-st.markdown("### 🧱 3 blocs logiciels")
+st.markdown("### Three software blocks")
 
 col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown(
         """
-<div class="edge-card" style="min-height:240px;border-top:4px solid #3b82f6;">
-  <div style="font-weight:700;font-size:16px;margin-bottom:10px;">1️⃣ UI Streamlit</div>
-  <div style="color:#4b4f6b;font-size:13px;">
-    • Vitrine + bac à sable de test<br/>
-    • Upload drag &amp; drop (single / batch ZIP)<br/>
-    • Visualisation pipeline 5 étapes<br/>
-    • Export JSON / Webhook<br/><br/>
+<div class="edge-card" style="min-height:240px;">
+  <div style="font-weight:600;font-size:15px;margin-bottom:10px;">01 &nbsp;UI Streamlit</div>
+  <div style="color:#5c5e62;font-size:13px;line-height:1.7;">
+    Showcase and test sandbox.<br/>
+    Drag &amp; drop upload (single / batch ZIP).<br/>
+    Five-step pipeline visualization.<br/>
+    JSON export and webhook test.<br/><br/>
     <span class="edge-pill">DEMO ONLY</span>
   </div>
 </div>
@@ -36,14 +36,14 @@ with col1:
 with col2:
     st.markdown(
         """
-<div class="edge-card" style="min-height:240px;border-top:4px solid #e85d04;">
-  <div style="font-weight:700;font-size:16px;margin-bottom:10px;">2️⃣ Inference Engine</div>
-  <div style="color:#4b4f6b;font-size:13px;">
-    • Lib Python autonome (<code>src/infer/</code>)<br/>
-    • Runtime ONNX ou PyTorch<br/>
-    • Pré/post-traitement déterministe<br/>
-    • NMS + filtrage confiance<br/><br/>
-    <span class="edge-pill">SOL + ORBITE</span>
+<div class="edge-card" style="min-height:240px;">
+  <div style="font-weight:600;font-size:15px;margin-bottom:10px;">02 &nbsp;Inference engine</div>
+  <div style="color:#5c5e62;font-size:13px;line-height:1.7;">
+    Standalone Python library (<code>src/infer/</code>).<br/>
+    ONNX or PyTorch runtime.<br/>
+    Deterministic pre / post-processing.<br/>
+    NMS and confidence filtering.<br/><br/>
+    <span class="edge-pill">GROUND + ORBIT</span>
   </div>
 </div>
 """,
@@ -52,14 +52,14 @@ with col2:
 with col3:
     st.markdown(
         """
-<div class="edge-card" style="min-height:240px;border-top:4px solid #16a34a;">
-  <div style="font-weight:700;font-size:16px;margin-bottom:10px;">3️⃣ Packetizer + Signer</div>
-  <div style="color:#4b4f6b;font-size:13px;">
-    • Génération event packet JSON<br/>
-    • Hash SHA-256 (entrée, modèle, packet)<br/>
-    • Signature HMAC-SHA256<br/>
-    • Client webhook + idempotency key<br/><br/>
-    <span class="edge-pill">SOL + ORBITE</span>
+<div class="edge-card" style="min-height:240px;">
+  <div style="font-weight:600;font-size:15px;margin-bottom:10px;">03 &nbsp;Packetizer + signer</div>
+  <div style="color:#5c5e62;font-size:13px;line-height:1.7;">
+    JSON event packet generation.<br/>
+    SHA-256 hash (input, model, packet).<br/>
+    HMAC-SHA256 signature.<br/>
+    Webhook client with idempotency key.<br/><br/>
+    <span class="edge-pill">GROUND + ORBIT</span>
   </div>
 </div>
 """,
@@ -69,29 +69,25 @@ with col3:
 st.divider()
 
 # ── Pipeline ──────────────────────────────────────────────────────────────────
-st.markdown("### 🔄 Pipeline complète")
+st.markdown("### Full pipeline")
 
 st.code(
     """
-╔════════════════════════════════════════════════════════════════════════════╗
-║                        EDGE SPACE — Pipeline                             ║
-╠════════════════════════════════════════════════════════════════════════════╣
-║                                                                          ║
-║   📷 Image Satellite (tile 640×640)                                      ║
-║        │                                                                 ║
-║        ▼                                                                 ║
-║   ┌──────────┐  ┌─────────────┐  ┌──────────┐  ┌─────────┐  ┌────────┐ ║
-║   │ Ingestion│─▶│ Pré-process │─▶│Inférence │─▶│Post-NMS │─▶│ Packet │ ║
-║   │ load/tile│  │ resize/norm │  │ YOLO11s  │  │ filtrage│  │ signer │ ║
-║   └──────────┘  └─────────────┘  │ ONNX/PT  │  │ cluster │  └───┬────┘ ║
-║                                  └──────────┘  └─────────┘      │      ║
-║                                                     ┌───────────┤      ║
-║                                                     ▼           ▼      ║
-║                                              ┌──────────┐ ┌─────────┐  ║
-║                                              │ Evidence │ │ Webhook │  ║
-║                                              │thumb+hash│ │POST API │  ║
-║                                              └──────────┘ └─────────┘  ║
-╚════════════════════════════════════════════════════════════════════════════╝
+Satellite tile (640x640)
+    |
+    v
++----------+   +-------------+   +----------+   +---------+   +--------+
+| Ingest   |-->| Pre-process |-->| Inference|-->| Post-NMS|-->| Packet |
+| load     |   | resize/norm |   | YOLO11s  |   | filter  |   | signer |
++----------+   +-------------+   | ONNX/PT  |   | cluster |   +---+----+
+                                 +----------+   +---------+       |
+                                                       +----------+
+                                                       |          |
+                                                       v          v
+                                                +----------+ +---------+
+                                                | Evidence | | Webhook |
+                                                |thumb+hash| |POST API |
+                                                +----------+ +---------+
 """,
     language="text",
 )
@@ -99,14 +95,14 @@ st.code(
 st.divider()
 
 # ── Déploiement orbital ───────────────────────────────────────────────────────
-st.markdown("### 🚀 Déploiement orbital")
+st.markdown("### Orbital deployment")
 
 st.markdown(
     """
 <div class="edge-card">
-  <div style="font-weight:700;font-size:16px;margin-bottom:12px;">Empaquetage conteneur</div>
-  <div style="color:#4b4f6b;font-size:14px;">
-    Le bloc <b>Inference Engine</b> + <b>Packetizer</b> est empaquetable en conteneur léger :
+  <div style="font-weight:600;font-size:15px;margin-bottom:12px;">Container packaging</div>
+  <div style="color:#5c5e62;font-size:14px;line-height:1.6;">
+    The <b>Inference engine</b> and <b>Packetizer</b> blocks are packaged as a lightweight container.
   </div>
 </div>
 """,
@@ -115,7 +111,7 @@ st.markdown(
 
 st.code(
     """
-# Dockerfile orbital (exemple)
+# Sample orbital Dockerfile
 FROM python:3.12-slim
 
 COPY src/infer/ /app/infer/
@@ -130,31 +126,31 @@ ENTRYPOINT ["python", "-m", "app.infer.runtime"]
 )
 
 st.markdown("""
-**Mêmes entrées / sorties :**
-- **Entrée** : image satellite (tile 640×640)
-- **Sortie** : event packet JSON signé (~1.2 kB)
+**Same inputs and outputs:**
+- **Input:** satellite tile (640×640)
+- **Output:** signed JSON event packet (~1.2 kB)
 
-**Ce qui change** : le transport (filesystem / API locale → lien S/X-band).
+**What changes:** the transport (filesystem / local API → S/X-band link).
 
-| Profil | Compute | Runtime | Modèle |
+| Profile | Compute | Runtime | Model |
 |---|---|---|---|
 | LP (Low Power) | Myriad X / edge TPU | ONNX INT8 | best.int8.onnx |
 | HP (High Perf) | AMD64 + GPU | ONNX FP16 | best.onnx |
-| Sol (démo) | GPU desktop | PyTorch FP32 | best.pt |
+| Ground (demo) | Desktop GPU | PyTorch FP32 | best.pt |
 """)
 
 st.divider()
 
 # ── Continuous improvement ────────────────────────────────────────────────────
-st.markdown("### 🔄 Continuous Improvement en orbite")
+st.markdown("### In-orbit continuous improvement")
 
 st.markdown("""
-Grâce au stockage embarqué (128 Gb+) et à la capacité de mise à jour logicielle :
+Thanks to on-board storage (128 Gb+) and software-update capability:
 
-1. **Upload** nouveau modèle ONNX via station sol
-2. **Validation** on-board (test sur images de référence)
-3. **Switch** vers le nouveau modèle (rollback possible)
-4. **Télémétrie** : métriques de performance remontées via event packets
+1. **Upload** a new ONNX model from the ground station
+2. **Validation** on-board (test on reference images)
+3. **Switch** to the new model (rollback supported)
+4. **Telemetry**: performance metrics returned through event packets
 
-➡️ Le modèle s'améliore continuellement sans changer le hardware.
+The model improves continuously without changing the hardware.
 """)

@@ -9,16 +9,16 @@ from app.state import init_state
 from app.ui import apply_theme, header
 from src.infer.webhook import post_webhook
 
-st.set_page_config(page_title="EDGE SPACE — API", page_icon="📡", layout="wide")
+st.set_page_config(page_title="EDGE SPACE — API", layout="wide")
 apply_theme()
 init_state()
 
-header("📡 API & Webhook", "Schéma JSON, test webhook, logs HTTP.")
+header("API & webhook", "JSON schema, webhook test, HTTP logs.")
 
 st.write("")
 
 # ── JSON Schema ───────────────────────────────────────────────────────────────
-st.markdown("### 📋 Schéma Event Packet")
+st.markdown("### Event packet schema")
 
 schema = {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -95,17 +95,17 @@ st.code(json.dumps(schema, indent=2), language="json")
 st.divider()
 
 # ── Webhook test ──────────────────────────────────────────────────────────────
-st.markdown("### 🧪 Test Webhook")
+st.markdown("### Webhook test")
 
-webhook_url = st.text_input("URL du webhook", value="http://127.0.0.1:8000/webhook")
+webhook_url = st.text_input("Webhook URL", value="http://127.0.0.1:8000/webhook")
 
 col_test, col_mock = st.columns(2)
 
 with col_test:
-    st.markdown("**Envoyer le dernier event packet :**")
+    st.markdown("**Send the latest event packet:**")
     if st.session_state.last_packet:
-        if st.button("📤 POST webhook"):
-            with st.spinner("Envoi…"):
+        if st.button("POST webhook"):
+            with st.spinner("Sending…"):
                 status, body, latency = post_webhook(webhook_url, st.session_state.last_packet)
             st.session_state.events_log.append({
                 "event_id": st.session_state.last_packet["event_id"],
@@ -113,27 +113,27 @@ with col_test:
                 "latency_ms": round(latency, 1),
             })
             if 200 <= status < 300:
-                st.success(f"✅ HTTP {status} — {latency:.1f} ms")
+                st.success(f"HTTP {status} — {latency:.1f} ms")
             else:
-                st.error(f"❌ HTTP {status} : {body[:300]}")
+                st.error(f"HTTP {status}: {body[:300]}")
                 st.session_state.errors_log.append({
                     "event_id": st.session_state.last_packet["event_id"],
                     "error": body[:300],
                 })
 
-        st.markdown("**Aperçu payload :**")
+        st.markdown("**Payload preview:**")
         st.code(json.dumps(st.session_state.last_packet, indent=2)[:3000], language="json")
     else:
-        st.info("Aucun event packet. Lance d'abord une détection dans « Try it ».")
+        st.info("No event packet yet. Run a detection from the Try it page.")
 
 with col_mock:
-    st.markdown("**Serveur mock local :**")
+    st.markdown("**Local mock server:**")
     st.code(
-        """# Lancer le serveur mock :
+        """# Start the mock server
 python scripts/mock_webhook.py
 
-# Écoute sur http://127.0.0.1:8000/webhook
-# Affiche les packets reçus dans le terminal
+# Listening on http://127.0.0.1:8000/webhook
+# Prints received packets in the terminal
 """,
         language="bash",
     )
@@ -141,7 +141,7 @@ python scripts/mock_webhook.py
 st.divider()
 
 # ── Curl example ──────────────────────────────────────────────────────────────
-st.markdown("### 💻 Exemple cURL")
+st.markdown("### cURL example")
 
 st.code(
     """curl -X POST https://your-server.com/webhook \\
@@ -155,13 +155,13 @@ st.code(
 st.divider()
 
 # ── HTTP Log ──────────────────────────────────────────────────────────────────
-st.markdown("### 📜 Log HTTP")
+st.markdown("### HTTP log")
 
 if st.session_state.events_log:
     st.dataframe(pd.DataFrame(st.session_state.events_log), use_container_width=True)
 else:
-    st.info("Aucun envoi webhook enregistré.")
+    st.info("No webhook send recorded.")
 
 if st.session_state.errors_log:
-    st.markdown("**❌ Erreurs :**")
+    st.markdown("**Errors:**")
     st.dataframe(pd.DataFrame(st.session_state.errors_log), use_container_width=True)

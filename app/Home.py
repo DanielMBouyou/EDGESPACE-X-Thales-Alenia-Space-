@@ -7,28 +7,27 @@ import streamlit as st
 from app.ui import apply_theme, header, metric_card
 from app.state import init_state
 
-st.set_page_config(page_title="EDGE SPACE — Wildfire Detection", page_icon="🔥", layout="wide")
+st.set_page_config(page_title="EDGE SPACE — Wildfire Detection", layout="wide")
 apply_theme()
 init_state()
 
 # ── Hero ──────────────────────────────────────────────────────────────────────
 header(
-    "EDGE SPACE  🛰️🔥",
-    "On-board AI → Event packets (kB) → webhook / API → décision en minutes.",
+    "EDGE SPACE",
+    "On-board AI. Verifiable event packets. Decision-grade alerts in minutes.",
 )
 
 st.write("")
 
 st.markdown(
     """
-<div class="edge-card" style="text-align:center;padding:28px 32px;">
-  <div style="font-size:22px;font-weight:700;color:#0b1a3a;margin-bottom:10px;">
-    🎯 On ne downlink pas des images — on downlink des
-    <span style="color:#e85d04;">alertes vérifiables</span>
+<div class="edge-card" style="padding:32px;">
+  <div style="font-size:22px;font-weight:600;color:#171a20;margin-bottom:12px;letter-spacing:-0.02em;">
+    We do not downlink images. We downlink verifiable alerts.
   </div>
-  <div style="font-size:15px;color:#4b4f6b;line-height:1.6;">
-    Détection rapide des feux de forêt à partir d'images satellites et d'IA embarquée.<br/>
-    Event packets signés, intégrables instantanément via webhook / API.
+  <div style="font-size:15px;color:#5c5e62;line-height:1.6;">
+    Wildfire detection from satellite imagery, executed on-board. Signed event packets,
+    integrable through webhook or API.
   </div>
 </div>
 """,
@@ -40,26 +39,26 @@ st.write("")
 # ── 3 KPIs visibles ──────────────────────────────────────────────────────────
 col1, col2, col3 = st.columns(3)
 with col1:
-    metric_card("📦 Event Packet", "~1.2 kB", "vs ~50 MB image brute — ×41 000 plus petit")
+    metric_card("Event packet", "~1.2 kB", "vs ~50 MB raw image — 41,000× smaller")
 with col2:
-    metric_card("⏱️ Latence orbite → sol", "< 90 sec", "inférence + downlink + API webhook")
+    metric_card("Orbit-to-ground latency", "< 90 sec", "inference + downlink + API webhook")
 with col3:
-    metric_card("📉 Volume évité", "99.99 %", "de données non transférées")
+    metric_card("Volume avoided", "99.99 %", "of data not transferred")
 
 st.write("")
 st.divider()
 
 # ── Navigation rapide ─────────────────────────────────────────────────────────
-st.markdown("### 🚀 Navigation rapide")
+st.markdown("### Navigation")
 
 _NAV = [
-    ("🔬 Démo live", "pages/1_Try_it.py"),
-    ("📊 KPIs", "pages/2_KPIs.py"),
-    ("🛰️ Satellite Proof", "pages/3_Satellite_Proof.py"),
-    ("🏗️ Architecture", "pages/4_Architecture.py"),
-    ("🔒 Sécurité", "pages/5_Security.py"),
-    ("📡 API", "pages/6_API_Integration.py"),
-    ("📜 Logs", "pages/7_Logs.py"),
+    ("Live demo", "pages/1_Try_it.py"),
+    ("KPIs", "pages/2_KPIs.py"),
+    ("Satellite proof", "pages/3_Satellite_Proof.py"),
+    ("Architecture", "pages/4_Architecture.py"),
+    ("Security", "pages/5_Security.py"),
+    ("API", "pages/6_API_Integration.py"),
+    ("Logs", "pages/7_Logs.py"),
 ]
 
 cols = st.columns(len(_NAV))
@@ -72,8 +71,8 @@ st.write("")
 st.divider()
 
 # ── Exemple Event Packet ─────────────────────────────────────────────────────
-st.markdown("### 📋 Exemple d'Event Packet")
-st.caption("C'est **exactement** ce qui est transmis du satellite au sol — pas l'image.")
+st.markdown("### Event packet sample")
+st.caption("This is exactly what is transmitted from the satellite to the ground — not the image.")
 
 example_packet = {
     "event_id": "c9d0a3b1-1a50-4af4-83b8-1d2b12a6d7c2",
@@ -98,19 +97,19 @@ with col_j:
 with col_e:
     st.markdown(
         """
-**Champs clés**
+**Key fields**
 
-| Champ | Rôle |
+| Field | Role |
 |---|---|
 | `event_type` | wildfire / oil_spill / … |
-| `sat_id` | Identifiant satellite |
+| `sat_id` | Satellite identifier |
 | `geolocation` | Lat / lon + geohash |
-| `detections[]` | Bbox + confiance + classe |
+| `detections[]` | Bbox + confidence + class |
 | `evidence` | Thumbnail 128×128 + hash |
-| `integrity` | Hash packet + HMAC signature |
-| `latency_ms` | Chronométrage complet |
+| `integrity` | Packet hash + HMAC signature |
+| `latency_ms` | Full timing breakdown |
 
-**~1.2 kB** total transmis — pas l'image.
+Total transmitted: **~1.2 kB**. The image stays on board.
 """
     )
 
@@ -118,19 +117,20 @@ st.write("")
 st.divider()
 
 # ── Comparatif Image vs Packet ────────────────────────────────────────────────
-st.markdown("### 📡 Image brute vs Event Packet")
+st.markdown("### Raw image vs event packet")
 left, right = st.columns(2)
 with left:
     st.markdown(
         """
-<div class="edge-card" style="border-left:4px solid #dc2626;">
-  <b style="font-size:16px;">❌ Approche classique — downlink images</b>
-  <ul style="color:#4b4f6b;margin-top:10px;font-size:14px;">
-    <li>Image brute : <b>50 – 500 MB</b></li>
-    <li>Downlink S-band 500 kbps → <b>13 – 130 min</b></li>
-    <li>Fenêtre de contact ~10 min / passage</li>
-    <li>Traitement au sol → heures de délai</li>
-    <li>⚠️ Impossible de couvrir en temps réel</li>
+<div class="edge-card">
+  <div class="edge-pill">CLASSIC</div>
+  <b style="font-size:15px;color:#171a20;">Downlink raw images</b>
+  <ul style="color:#5c5e62;margin-top:10px;font-size:14px;line-height:1.7;">
+    <li>Raw image: <b>50 – 500 MB</b></li>
+    <li>S-band downlink at 500 kbps: <b>13 – 130 min</b></li>
+    <li>Contact window ~10 min per pass</li>
+    <li>Ground processing: hours of additional delay</li>
+    <li>Real-time coverage is not feasible</li>
   </ul>
 </div>
 """,
@@ -139,14 +139,15 @@ with left:
 with right:
     st.markdown(
         """
-<div class="edge-card" style="border-left:4px solid #16a34a;">
-  <b style="font-size:16px;">✅ EDGE SPACE — event packets</b>
-  <ul style="color:#4b4f6b;margin-top:10px;font-size:14px;">
-    <li>Event packet : <b>~1.2 kB</b></li>
-    <li>Downlink S-band → <b>< 1 sec</b></li>
-    <li>Multiple opportunités par orbite</li>
-    <li>Alerte webhook instantanée</li>
-    <li>✅ Quasi temps réel bout-en-bout</li>
+<div class="edge-card" style="border-color:#171a20;border-width:2px;">
+  <div class="edge-pill" style="background:#171a20;color:#ffffff;">EDGE SPACE</div>
+  <b style="font-size:15px;color:#171a20;">Downlink event packets</b>
+  <ul style="color:#5c5e62;margin-top:10px;font-size:14px;line-height:1.7;">
+    <li>Event packet: <b>~1.2 kB</b></li>
+    <li>S-band downlink: <b>&lt; 1 sec</b></li>
+    <li>Multiple opportunities per orbit</li>
+    <li>Webhook alert is instantaneous</li>
+    <li>Near real-time end-to-end</li>
   </ul>
 </div>
 """,
@@ -154,4 +155,4 @@ with right:
     )
 
 st.write("")
-st.caption("EDGE SPACE — Détection rapide des feux de forêt · Incubateur Thales")
+st.caption("EDGE SPACE — Wildfire detection from satellite imagery · Thales Incubator")
